@@ -57,7 +57,7 @@ async function createUser(req, res) {
             password: passwordHash
         });
 
-        res.status(201).send({ message: 'user created' });
+        res.status(201).send({ message: 'user created successfully' });
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
