@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
 import db from '../database/db.js';
 
-const userSchema = joi.object({
+const registerSchema = joi.object({
     name: joi.string()
         .min(3)
         .max(20)
@@ -20,13 +20,22 @@ const userSchema = joi.object({
     confirm_password: joi.ref('password')
 });
 
+const loginSchema = joi.object({
+    email: joi.string()
+        .email()
+        .required(),
+
+    password: joi.string()
+        .required()
+});
+
 async function emailRegistered(email) {
     return (await db.collection('users').findOne({ email: email }));
 }
 
 async function createUser(req, res) {
     const { name, email, password, confirm_password } = req.body;
-    const validation = userSchema.validate({ name, email, password, confirm_password }, { abortEarly: false });
+    const validation = registerSchema.validate({ name, email, password, confirm_password }, { abortEarly: false });
 
     if (validation.error) {
         const errors = validation.error.details.map(error => error.message);
@@ -55,6 +64,41 @@ async function createUser(req, res) {
     }
 }
 
+async function login(req, res) {
+    const { email, password } = req.body;
+    const validation = loginSchema.validate({ email, password });
+
+    if (validation.error) {
+        const errors = validation.error.details.map(error => error.message);
+        res.status(422).send({ message: errors });
+        return;
+    }
+
+    try {
+        const user = await db.collection('users').findOne({ email });
+        const passwordIsValid = bcrypt.compareSync(password, user.password)
+
+        if(user && passwordIsValid) {
+            const token = uuid();
+
+            await db.collection("sessions").insertOne({
+                userId: user._id,
+                token
+            });
+    
+            res.send({ token: token });
+
+        } else {
+            res.status(401).send({ message: 'incorrect e-mail or password' });
+        }
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+}
+
 export {
-    createUser
+    createUser,
+    login
 };
