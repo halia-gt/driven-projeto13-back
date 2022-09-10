@@ -1,26 +1,24 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import joi from 'joi';
-import { MongoClient, ObjectId } from 'mongodb';
-import dayjs from 'dayjs';
-import { stripHtml } from 'string-strip-html';
-
-dotenv.config();
+import mongo from './db/db.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uri = process.env.MONGO_URI;
-const client = new MongoClient(uri);
-let db;
+const db = await mongo();
 
-(async () => {
+app.get('/sign-up', async (req, res) => {
+    const { name, email, password, confirm } = req.body;
     try {
-        await client.connect();
-        db = client.db('batepapo-uol');
+        console.log('To vivo?')
+
+        res.send('Ok');
+        
     } catch (error) {
         console.log(error);
+        res.sendStatus(500);
     }
-})();
+});
+
+app.listen(5000, () => console.log('Listening on port 5000'));
