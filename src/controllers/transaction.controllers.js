@@ -1,33 +1,13 @@
-import joi from 'joi';
 import dayjs from 'dayjs';
 import db from '../database/db.js'; 
-
-const transactionSchema = joi.object({
-    amount: joi.number()
-        .precision(2)
-        .required(),
-    
-    description: joi.string()
-        .required(),
-    
-    type: joi.valid('expense', 'income')
-        .required()
-});
 
 async function createTransaction(req, res) {
     const { amount, description, type } = req.body;
     const user = res.locals.user;
-    const validation = transactionSchema.validate({ amount, description, type }, { abortEarly: false });
-
-    if (validation.error) {
-        const errors = validation.error.details.map(error => error.message);
-        res.status(422).send({ message: errors });
-        return;
-    }
 
     try {
         await db.collection('transactions').insertOne({
-            amount,
+            amount: Number(amount).toFixed(2),
             description,
             type,
             time: dayjs().format('DD/MM/YYYY'),
@@ -44,25 +24,62 @@ async function createTransaction(req, res) {
 
 async function listTransactions(req, res) {
     const user = res.locals.user;
+    const query = { userId: user._id};
+    const options = {
+        sort: {
+            _id: -1
+        }
+    };
 
     try {
-        const query = { userId: user._id};
-        const options = {
-            sort: {
-                _id: -1
-            }
-        };
         const transactions = await db.collection('transactions').find(query, options).project({ userId: 0 }).toArray();
-        
+
         res.send({ transactions });
 
     } catch (error) {
         console.log(error); 
         res.sendStatus(500);
     }
-}   
+}
+
+async function deleteTransaction(req, res) {
+    const query = res.locals.transactionId;
+
+    try {
+        await db.collection('transactions').deleteOne(query);
+
+        res.send({ message: 'transaction deleted successfully' });
+        
+    } catch (error) {
+        console.log(error); 
+        res.sendStatus(500);
+    }
+}
+
+async function updateTransaction(req, res) {
+    const { amount, description, type } = req.body;
+    const query = res.locals.transactionId;
+    const newDocument = { $set: {
+            amount,
+            description,
+            type
+        }
+    };
+
+    try {
+        await db.collection('transactions').updateOne(query, newDocument);
+
+        res.send({ message: 'transaction updated successfully' })
+        
+    } catch (error) {
+        console.log(error); 
+        res.sendStatus(500);
+    }
+}
 
 export {
     createTransaction,
-    listTransactions
+    listTransactions,
+    deleteTransaction,
+    updateTransaction
 };
