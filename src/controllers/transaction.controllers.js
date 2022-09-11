@@ -10,7 +10,7 @@ async function createTransaction(req, res) {
             amount: Number(amount).toFixed(2),
             description,
             type,
-            time: dayjs().format('DD/MM/YYYY'),
+            time: dayjs().format(),
             userId: user._id
         });
 
