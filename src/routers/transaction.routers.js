@@ -6,5 +6,6 @@ const router = express.Router();
 router.use(authorizationMiddleware);
 
 router.post('/transactions', transactionController.createTransaction);
+router.get('/transactions', transactionController.listTransactions);
 
 export default router;

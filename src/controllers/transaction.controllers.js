@@ -1,6 +1,6 @@
 import joi from 'joi';
 import dayjs from 'dayjs';
-import db from '../database/db.js';
+import db from '../database/db.js'; 
 
 const transactionSchema = joi.object({
     amount: joi.number()
@@ -16,6 +16,7 @@ const transactionSchema = joi.object({
 
 async function createTransaction(req, res) {
     const { amount, description, type } = req.body;
+    const user = res.locals.user;
     const validation = transactionSchema.validate({ amount, description, type }, { abortEarly: false });
 
     if (validation.error) {
@@ -25,8 +26,6 @@ async function createTransaction(req, res) {
     }
 
     try {
-        const user = res.locals.user;
-
         await db.collection('transactions').insertOne({
             amount,
             description,
@@ -43,6 +42,27 @@ async function createTransaction(req, res) {
     }
 }
 
+async function listTransactions(req, res) {
+    const user = res.locals.user;
+
+    try {
+        const query = { userId: user._id};
+        const options = {
+            sort: {
+                _id: -1
+            }
+        };
+        const transactions = await db.collection('transactions').find(query, options).project({ userId: 0 }).toArray();
+        
+        res.send({ transactions });
+
+    } catch (error) {
+        console.log(error); 
+        res.sendStatus(500);
+    }
+}   
+
 export {
     createTransaction,
+    listTransactions
 };
