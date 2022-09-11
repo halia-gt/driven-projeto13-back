@@ -98,7 +98,22 @@ async function login(req, res) {
     }
 }
 
+async function logout(req, res) {
+    const token = res.locals.token;
+
+    try {
+        await db.collection('sessions').deleteOne({ token });
+
+        res.send({ message: 'logout sucessful' });
+        
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+}
+
 export {
     createUser,
-    login
+    login,
+    logout
 };

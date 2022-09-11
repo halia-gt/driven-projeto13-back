@@ -5,6 +5,7 @@ async function verifyAuthorization(req, res, next) {
     const token = authorization?.replace('Bearer ', '');
     if (!token) {
         res.sendStatus(401);
+        return;
     }
     
     try {
@@ -24,6 +25,7 @@ async function verifyAuthorization(req, res, next) {
 
         delete user.password;
         res.locals.user = user;
+        res.locals.token = token;
         next();
 
     } catch (error) {
