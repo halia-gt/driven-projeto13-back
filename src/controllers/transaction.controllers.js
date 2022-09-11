@@ -34,7 +34,7 @@ async function listTransactions(req, res) {
     try {
         const transactions = await db.collection('transactions').find(query, options).project({ userId: 0 }).toArray();
 
-        res.send({ transactions });
+        res.send(transactions);
 
     } catch (error) {
         console.log(error); 
