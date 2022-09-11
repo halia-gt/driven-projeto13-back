@@ -85,8 +85,9 @@ async function login(req, res) {
                 userId: user._id,
                 token
             });
-    
-            res.send({ token: token });
+            
+            delete user.password
+            res.send({ ...user, token });
 
         } else {
             res.status(401).send({ message: 'incorrect e-mail or password' });
